@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: ./ventas-api
+      dockerfile: ../docker/php/Dockerfile
+    container_name: ventas_backend
+    working_dir: /var/www/html
+    volumes:
+      - ./ventas-api:/var/www/html
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ventas_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: ventas_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./ventas-api:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - ventas_net
+
+  db:
+    image: mysql:8.0
+    container_name: ventas_db
+    environment:
+      MYSQL_DATABASE: ventas_api
+      MYSQL_USER: ventas
+      MYSQL_PASSWORD: ventas
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - ventas_db_data:/var/lib/mysql
+    networks:
+      - ventas_net
+
+  redis:
+    image: redis:alpine
+    container_name: ventas_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ventas_net
+
+networks:
+  ventas_net:
+
+volumes:
+  ventas_db_data:
